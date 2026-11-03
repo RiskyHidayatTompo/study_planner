@@ -185,17 +185,6 @@ input,select{ font-family:inherit; }
   box-shadow:inset 3px 0 0 var(--moon);
 }
 
-.sidebar-player{
-  margin-top:auto; background:var(--panel-2); border:1px solid var(--hairline);
-  border-radius:var(--radius); padding:.9rem;
-}
-.sidebar-player__label{ margin:0 0 .5rem; font-size:.78rem; color:var(--silver-dim); display:flex; align-items:center; gap:.4rem; }
-.sidebar-player__label i{ color:#1db954; }
-.spotify-select{
-  width:100%; background:var(--void); border:1px solid var(--hairline); color:var(--white);
-  padding:.5rem; border-radius:var(--radius-sm); margin-bottom:.6rem; font-size:.85rem;
-}
-.spotify-embed-wrap iframe{ border-radius:12px; }
 
 /* =========================================================
    Main / topbar
@@ -404,7 +393,6 @@ input,select{ font-family:inherit; }
   .sidebar{ width:100%; flex-direction:row; flex-wrap:wrap; border-right:none; border-bottom:1px solid var(--hairline); }
   .nav{ flex-direction:row; flex-wrap:wrap; flex:1; }
   .nav-item span{ display:none; }
-  .sidebar-player{ display:none; }
   .main{ padding:1.2rem; }
   .grid-3{ grid-template-columns:1fr; }
   .topbar{ flex-direction:column; align-items:flex-start; }
@@ -416,3 +404,44 @@ input,select{ font-family:inherit; }
   border:2px solid var(--moon-glow);
 }
 .avatar-actions{ display:flex; align-items:center; gap:.8rem; flex-wrap:wrap; margin-top:.9rem; }
+
+/* ---- Fokus Audio: pemutar Spotify mengambang ---- */
+.sidebar #logoutBtn{ margin-top:auto; }
+
+.audio-fab{
+  position:fixed; right:1.2rem; bottom:1.2rem; z-index:50;
+  display:flex; align-items:center; gap:.55rem; cursor:pointer;
+  padding:.7rem 1.1rem; border-radius:999px;
+  background:var(--panel-2); color:var(--white);
+  border:1px solid var(--moon-dim);
+  font:700 .9rem var(--font-body); letter-spacing:.02em;
+  box-shadow:0 0 22px rgba(79,158,255,.35);
+}
+.audio-fab i{ color:#1db954; font-size:1.15rem; }
+.audio-fab:hover{ border-color:var(--moon-glow); box-shadow:0 0 28px rgba(126,200,255,.5); }
+
+.audio-dock{
+  position:fixed; right:1.2rem; bottom:1.2rem; z-index:50;
+  width:min(380px, calc(100vw - 2.4rem)); max-height:calc(100vh - 2.4rem); overflow-y:auto;
+  background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border:1px solid var(--moon-dim); border-radius:var(--radius);
+  padding:.9rem; box-shadow:0 12px 40px rgba(0,0,0,.55), 0 0 26px rgba(79,158,255,.25);
+  transition:transform .28s ease, opacity .28s ease;
+}
+/* Disembunyikan dengan transform (bukan display:none) agar musik tidak terhenti */
+.audio-dock.is-collapsed{ transform:translateY(calc(100% + 2.4rem)); opacity:0; pointer-events:none; }
+.audio-dock__head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
+.audio-dock__title{ margin:0; display:flex; align-items:center; gap:.5rem; font-weight:700; color:var(--silver); }
+.audio-dock__title i{ color:#1db954; font-size:1.1rem; }
+.audio-dock__tabs{ display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.7rem; }
+.spotify-embed-wrap{ min-height:352px; border-radius:12px; background:var(--void); }
+.spotify-embed-wrap iframe{ display:block; }
+.audio-dock__hint{ margin:.7rem 0 0; font-size:.78rem; line-height:1.35; color:var(--silver-dim); }
+.audio-dock__hint i{ color:var(--moon-glow); margin-right:.2rem; }
+.audio-dock__hint a{ color:var(--moon-glow); }
+
+@media (max-width: 760px){
+  .audio-fab span{ display:none; }
+  .audio-fab{ padding:.85rem; }
+  .audio-dock{ right:.8rem; bottom:.8rem; width:calc(100vw - 1.6rem); max-height:calc(100vh - 1.6rem); }
+}
