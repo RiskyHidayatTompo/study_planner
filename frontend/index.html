@@ -88,6 +88,10 @@
       <button class="nav-item" data-view="profile"><i class="fa-solid fa-user-shield"></i><span>Profile</span></button>
     </nav>
 
+    <button type="button" id="audioFab" class="btn btn--ghost btn--block audio-toggle" aria-controls="audioDock" aria-expanded="false">
+      <i class="fa-brands fa-spotify"></i> Fokus Audio
+    </button>
+
     <button id="logoutBtn" class="btn btn--ghost btn--block"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
   </aside>
 
@@ -226,9 +230,6 @@
   </main>
 
   <!-- ---------- FOKUS AUDIO (Spotify) ---------- -->
-  <button type="button" class="audio-fab" id="audioFab" aria-label="Buka Fokus Audio">
-    <i class="fa-brands fa-spotify"></i><span>Fokus Audio</span>
-  </button>
   <section class="audio-dock is-collapsed" id="audioDock" aria-label="Pemutar Fokus Audio" aria-hidden="true" inert>
     <div class="audio-dock__head">
       <p class="audio-dock__title"><i class="fa-brands fa-spotify"></i> Fokus Audio</p>
