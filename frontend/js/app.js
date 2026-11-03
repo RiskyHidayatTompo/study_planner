@@ -547,11 +547,13 @@ function setAudioDock(open) {
   dock.classList.toggle('is-collapsed', !open);
   dock.inert = !open;
   dock.setAttribute('aria-hidden', String(!open));
-  $('#audioFab').classList.toggle('is-hidden', open);
+  const toggle = $('#audioFab');
+  toggle.classList.toggle('is-active', open);
+  toggle.setAttribute('aria-expanded', String(open));
   if (open && !audio.loaded) renderSpotify();
 }
 
-$('#audioFab').addEventListener('click', () => setAudioDock(true));
+$('#audioFab').addEventListener('click', () => setAudioDock($('#audioDock').classList.contains('is-collapsed')));
 $('#audioClose').addEventListener('click', () => setAudioDock(false));
 $all('[data-playlist]').forEach(chip => {
   chip.addEventListener('click', () => {
