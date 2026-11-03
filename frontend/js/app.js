@@ -528,16 +528,43 @@ function closeModal() {
 $('#modalBackdrop').addEventListener('click', (e) => { if (e.target.id === 'modalBackdrop') closeModal(); });
 $all('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeModal));
 
-/* ============================ Spotify ============================ */
+/* ============================ Spotify / Fokus Audio ============================ */
+// Pemutar mengambang. Iframe hanya dibuat saat pertama kali dibuka, dan TIDAK dihapus saat
+// panel disembunyikan, sehingga musik tetap berjalan sambil kamu pindah halaman.
+const audio = { playlist: $('[data-playlist]').dataset.playlist, loaded: false };
+
 function renderSpotify() {
-  const id = $('#spotifyPlaylist').value;
-  $('#spotifyEmbedWrap').innerHTML = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/${id}?utm_source=generator&theme=0" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+  $('#spotifyEmbedWrap').innerHTML =
+    `<iframe title="Pemutar Spotify" style="border-radius:12px;border:0" ` +
+    `src="https://open.spotify.com/embed/playlist/${audio.playlist}?utm_source=generator&theme=0" ` +
+    `width="100%" height="352" allowfullscreen ` +
+    `allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+  audio.loaded = true;
 }
-$('#spotifyPlaylist').addEventListener('change', renderSpotify);
+
+function setAudioDock(open) {
+  const dock = $('#audioDock');
+  dock.classList.toggle('is-collapsed', !open);
+  dock.inert = !open;
+  dock.setAttribute('aria-hidden', String(!open));
+  $('#audioFab').classList.toggle('is-hidden', open);
+  if (open && !audio.loaded) renderSpotify();
+}
+
+$('#audioFab').addEventListener('click', () => setAudioDock(true));
+$('#audioClose').addEventListener('click', () => setAudioDock(false));
+$all('[data-playlist]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    if (chip.dataset.playlist === audio.playlist && audio.loaded) return;
+    $all('[data-playlist]').forEach(c => c.classList.remove('is-active'));
+    chip.classList.add('is-active');
+    audio.playlist = chip.dataset.playlist;
+    renderSpotify();
+  });
+});
 
 /* ============================ Boot ============================ */
 initAuthTabs();
-renderSpotify();
 
 (async function boot() {
   if (!Api.isConfigured) {
