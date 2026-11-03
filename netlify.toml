@@ -1,0 +1,15 @@
+# Konfigurasi deploy Netlify — Smart Study Planner (MoonKnight Edition)
+# Situs ini 100% statis (HTML/CSS/JS). Backend-nya adalah Supabase.
+
+[build]
+  # Menulis frontend/js/config.js dari environment variable (jika diset). Lihat build.js.
+  command = "node build.js"
+  publish = "frontend"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

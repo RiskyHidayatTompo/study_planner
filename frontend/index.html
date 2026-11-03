@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Study Planner — MoonKnight Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ================= AMBIENT BACKGROUND ================= -->
+<div class="ambient">
+  <div class="ambient-glow ambient-glow--1"></div>
+  <div class="ambient-glow ambient-glow--2"></div>
+  <div class="ambient-stars"></div>
+</div>
+
+<!-- ================= AUTH GATE ================= -->
+<section id="authGate" class="auth-gate">
+  <div class="auth-card">
+    <div class="auth-emblem">
+      <svg viewBox="0 0 120 120" class="emblem-svg">
+        <circle cx="60" cy="60" r="52" class="emblem-ring"/>
+        <path d="M60 14 A46 46 0 1 0 60 106 A34 34 0 1 1 60 14 Z" class="emblem-moon"/>
+      </svg>
+    </div>
+    <p class="eyebrow">Study Planner · Malam Purnama Produktivitas</p>
+    <h1 class="auth-title">MOONKNIGHT<span>EDITION</span></h1>
+
+    <div class="auth-tabs">
+      <button class="auth-tab is-active" data-tab="login">Masuk</button>
+      <button class="auth-tab" data-tab="register">Daftar</button>
+    </div>
+
+    <form id="loginForm" class="auth-form">
+      <label class="field">
+        <span>Email</span>
+        <input type="email" name="email" required placeholder="kamu@kampus.ac.id">
+      </label>
+      <label class="field">
+        <span>Kata Sandi</span>
+        <input type="password" name="password" required placeholder="••••••••">
+      </label>
+      <p class="form-error" id="loginError"></p>
+      <button type="submit" class="btn btn--primary btn--block">Bangkitkan Sesi <i class="fa-solid fa-arrow-right-long"></i></button>
+      <p class="auth-hint">Demo cepat? <button type="button" id="demoLoginBtn" class="link-btn">Masuk sebagai Demo</button></p>
+    </form>
+
+    <form id="registerForm" class="auth-form is-hidden">
+      <label class="field">
+        <span>Nama Panggilan</span>
+        <input type="text" name="username" required placeholder="Marc, Steven, atau apapun">
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input type="email" name="email" required placeholder="kamu@kampus.ac.id">
+      </label>
+      <label class="field">
+        <span>Kata Sandi</span>
+        <input type="password" name="password" required placeholder="Minimal 6 karakter">
+      </label>
+      <p class="form-error" id="registerError"></p>
+      <button type="submit" class="btn btn--primary btn--block">Tempa Akun Baru <i class="fa-solid fa-moon"></i></button>
+    </form>
+  </div>
+</section>
+
+<!-- ================= APP SHELL ================= -->
+<div id="appShell" class="app-shell is-hidden">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" class="brand-mark"><circle cx="20" cy="20" r="17" class="brand-ring"/><path d="M20 5 A15 15 0 1 0 20 35 A11 11 0 1 1 20 5 Z" class="brand-moon"/></svg>
+      <div>
+        <p class="brand-title">MoonKnight</p>
+        <p class="brand-sub">Study Planner</p>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item is-active" data-view="dashboard"><i class="fa-solid fa-chart-simple"></i><span>Dashboard</span></button>
+      <button class="nav-item" data-view="jadwal"><i class="fa-solid fa-calendar-week"></i><span>Jadwal Kuliah</span></button>
+      <button class="nav-item" data-view="tugas"><i class="fa-solid fa-list-check"></i><span>Tugas</span></button>
+      <button class="nav-item" data-view="statistik"><i class="fa-solid fa-chart-line"></i><span>Statistik</span></button>
+      <button class="nav-item" data-view="profile"><i class="fa-solid fa-user-shield"></i><span>Profile</span></button>
+    </nav>
+
+    <div class="sidebar-player">
+      <p class="sidebar-player__label"><i class="fa-brands fa-spotify"></i> Fokus Audio</p>
+      <select id="spotifyPlaylist" class="spotify-select">
+        <option value="37i9dQZF1DWZeKCadgRdKQ">Study Focus</option>
+        <option value="37i9dQZF1DX8Uebhn9wzrS">Lofi Beats</option>
+        <option value="37i9dQZF1DX4sWSpwq3LiO">Peaceful Piano</option>
+      </select>
+      <div id="spotifyEmbedWrap" class="spotify-embed-wrap"></div>
+    </div>
+
+    <button id="logoutBtn" class="btn btn--ghost btn--block"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h2 id="viewTitle">Dashboard</h2>
+        <p id="viewSubtitle" class="muted">Ringkasan aktivitas malam ini</p>
+      </div>
+      <div class="topbar-xp">
+        <div class="xp-ring-wrap">
+          <svg viewBox="0 0 64 64" class="xp-ring">
+            <circle cx="32" cy="32" r="27" class="xp-ring__track"/>
+            <circle cx="32" cy="32" r="27" class="xp-ring__fill" id="xpRingFill"/>
+          </svg>
+          <span id="topLevel" class="xp-ring__level">1</span>
+        </div>
+        <div>
+          <p class="xp-rank" id="topRank">Beginner</p>
+          <p class="xp-amount"><span id="topXp">0</span> XP</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- ---------- DASHBOARD ---------- -->
+    <section class="view is-active" id="view-dashboard">
+      <div class="ai-banner" id="aiRecommendation">
+        <i class="fa-solid fa-bolt"></i>
+        <div>
+          <p class="ai-banner__label">Rekomendasi AI</p>
+          <p class="ai-banner__text" id="aiRecText">Belum ada tugas aktif. Tambahkan tugas untuk mulai bertarung melawan deadline.</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="stat-card">
+          <p class="stat-card__label">Tugas Selesai</p>
+          <p class="stat-card__value" id="statDone">0</p>
+          <div class="progress-bar"><div class="progress-bar__fill" id="statDoneBar"></div></div>
+        </div>
+        <div class="stat-card">
+          <p class="stat-card__label">Sedang Proses</p>
+          <p class="stat-card__value" id="statProses">0</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-card__label">Belum Dikerjakan</p>
+          <p class="stat-card__value" id="statBelum">0</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3 class="panel__title"><i class="fa-solid fa-calendar-day"></i> Jadwal Hari Ini</h3>
+          <div id="todaySchedule" class="today-schedule"></div>
+        </div>
+        <div class="panel">
+          <h3 class="panel__title"><i class="fa-solid fa-hourglass-half"></i> Deadline Terdekat</h3>
+          <div id="upcomingDeadlines" class="deadline-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- JADWAL ---------- -->
+    <section class="view" id="view-jadwal">
+      <div class="panel">
+        <div class="panel__header">
+          <h3 class="panel__title"><i class="fa-solid fa-calendar-week"></i> Jadwal Kuliah Mingguan</h3>
+          <button class="btn btn--primary" id="addScheduleBtn"><i class="fa-solid fa-plus"></i> Tambah Jadwal</button>
+        </div>
+        <div class="week-grid" id="weekGrid"></div>
+      </div>
+    </section>
+
+    <!-- ---------- TUGAS ---------- -->
+    <section class="view" id="view-tugas">
+      <div class="panel">
+        <div class="panel__header">
+          <h3 class="panel__title"><i class="fa-solid fa-list-check"></i> Daftar Tugas</h3>
+          <button class="btn btn--primary" id="addTaskBtn"><i class="fa-solid fa-plus"></i> Tambah Tugas</button>
+        </div>
+        <div class="task-filters">
+          <button class="chip is-active" data-filter="semua">Semua</button>
+          <button class="chip" data-filter="belum">Belum</button>
+          <button class="chip" data-filter="proses">Proses</button>
+          <button class="chip" data-filter="selesai">Selesai</button>
+          <button class="chip chip--urgent" data-filter="urgent">🔥 Urgent</button>
+        </div>
+        <div id="taskList" class="task-list"></div>
+      </div>
+    </section>
+
+    <!-- ---------- STATISTIK ---------- -->
+    <section class="view" id="view-statistik">
+      <div class="grid-2">
+        <div class="panel">
+          <h3 class="panel__title"><i class="fa-solid fa-chart-pie"></i> Status Tugas</h3>
+          <canvas id="statusChart" height="220"></canvas>
+        </div>
+        <div class="panel">
+          <h3 class="panel__title"><i class="fa-solid fa-chart-column"></i> XP 7 Hari Terakhir</h3>
+          <canvas id="xpChart" height="220"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 class="panel__title"><i class="fa-solid fa-layer-group"></i> Tugas per Kategori</h3>
+        <canvas id="categoryChart" height="180"></canvas>
+      </div>
+    </section>
+
+    <!-- ---------- PROFILE ---------- -->
+    <section class="view" id="view-profile">
+      <div class="panel profile-hero">
+        <div class="profile-avatar">
+          <img id="profileAvatarImg" class="profile-avatar__img is-hidden" alt="Foto profil">
+          <svg id="profileAvatarSvg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" class="emblem-ring"/><path d="M50 8 A42 42 0 1 0 50 92 A31 31 0 1 1 50 8 Z" class="emblem-moon"/></svg>
+        </div>
+        <div>
+          <p class="profile-username" id="profileUsername">—</p>
+          <p class="profile-rank" id="profileRank">Beginner</p>
+          <div class="progress-bar progress-bar--lg">
+            <div class="progress-bar__fill" id="profileXpBar"></div>
+          </div>
+          <p class="muted" id="profileXpText">0 / 100 XP menuju level berikutnya</p>
+          <div class="avatar-actions">
+            <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp" hidden>
+            <button type="button" class="btn btn--ghost" id="avatarBtn"><i class="fa-solid fa-camera"></i> Ganti Foto</button>
+            <small class="muted">JPG / PNG / WebP, maks. 2 MB</small>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 class="panel__title"><i class="fa-solid fa-award"></i> Badge & Pencapaian</h3>
+        <div id="badgeList" class="badge-grid"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div class="modal-backdrop is-hidden" id="modalBackdrop">
+  <div class="modal" id="scheduleModal">
+    <h3 class="modal__title"><i class="fa-solid fa-calendar-plus"></i> Jadwal Mata Kuliah</h3>
+    <form id="scheduleForm">
+      <input type="hidden" name="id">
+      <label class="field"><span>Nama Mata Kuliah</span><input type="text" name="course_name" required></label>
+      <label class="field"><span>Hari</span>
+        <select name="day_of_week" required>
+          <option value="0">Senin</option><option value="1">Selasa</option><option value="2">Rabu</option>
+          <option value="3">Kamis</option><option value="4">Jumat</option><option value="5">Sabtu</option><option value="6">Minggu</option>
+        </select>
+      </label>
+      <div class="field-row">
+        <label class="field"><span>Mulai</span><input type="time" name="start_time" required></label>
+        <label class="field"><span>Selesai</span><input type="time" name="end_time" required></label>
+      </div>
+      <label class="field"><span>Ruangan (opsional)</span><input type="text" name="room"></label>
+      <label class="field"><span>Warna</span>
+        <div class="color-swatches" id="colorSwatches"></div>
+      </label>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" data-close-modal>Batal</button>
+        <button type="submit" class="btn btn--primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal" id="taskModal">
+    <h3 class="modal__title"><i class="fa-solid fa-scroll"></i> Tugas</h3>
+    <form id="taskForm">
+      <input type="hidden" name="id">
+      <label class="field"><span>Judul Tugas</span><input type="text" name="title" required></label>
+      <div class="field-row">
+        <label class="field"><span>Kategori</span>
+          <select name="category">
+            <option value="coding">Coding</option>
+            <option value="laporan">Laporan</option>
+            <option value="presentasi">Presentasi</option>
+            <option value="baca">Baca Materi</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </label>
+        <label class="field"><span>Prioritas</span>
+          <select name="priority">
+            <option value="normal">Normal</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </label>
+      </div>
+      <label class="field"><span>Deadline</span><input type="datetime-local" name="deadline"></label>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" data-close-modal>Batal</button>
+        <button type="submit" class="btn btn--primary">Simpan Tugas</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<div class="levelup-overlay is-hidden" id="levelupOverlay">
+  <div class="levelup-card">
+    <svg viewBox="0 0 140 140" class="levelup-moon"><circle cx="70" cy="70" r="60" class="emblem-ring"/><path d="M70 10 A60 60 0 1 0 70 130 A44 44 0 1 1 70 10 Z" class="emblem-moon"/></svg>
+    <p class="levelup-eyebrow">Transformasi</p>
+    <h2 class="levelup-title">LEVEL UP!</h2>
+    <p class="levelup-level" id="levelupLevel">Level 2</p>
+    <button class="btn btn--primary" id="levelupClose">Lanjutkan</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/gamify.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
