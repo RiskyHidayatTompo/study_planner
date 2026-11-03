@@ -88,16 +88,6 @@
       <button class="nav-item" data-view="profile"><i class="fa-solid fa-user-shield"></i><span>Profile</span></button>
     </nav>
 
-    <div class="sidebar-player">
-      <p class="sidebar-player__label"><i class="fa-brands fa-spotify"></i> Fokus Audio</p>
-      <select id="spotifyPlaylist" class="spotify-select">
-        <option value="37i9dQZF1DWZeKCadgRdKQ">Study Focus</option>
-        <option value="37i9dQZF1DX8Uebhn9wzrS">Lofi Beats</option>
-        <option value="37i9dQZF1DX4sWSpwq3LiO">Peaceful Piano</option>
-      </select>
-      <div id="spotifyEmbedWrap" class="spotify-embed-wrap"></div>
-    </div>
-
     <button id="logoutBtn" class="btn btn--ghost btn--block"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
   </aside>
 
@@ -234,6 +224,30 @@
       </div>
     </section>
   </main>
+
+  <!-- ---------- FOKUS AUDIO (Spotify) ---------- -->
+  <button type="button" class="audio-fab" id="audioFab" aria-label="Buka Fokus Audio">
+    <i class="fa-brands fa-spotify"></i><span>Fokus Audio</span>
+  </button>
+  <section class="audio-dock is-collapsed" id="audioDock" aria-label="Pemutar Fokus Audio" aria-hidden="true" inert>
+    <div class="audio-dock__head">
+      <p class="audio-dock__title"><i class="fa-brands fa-spotify"></i> Fokus Audio</p>
+      <button type="button" class="icon-btn" id="audioClose" aria-label="Sembunyikan pemutar" title="Sembunyikan (musik tetap berjalan)">
+        <i class="fa-solid fa-chevron-down"></i>
+      </button>
+    </div>
+    <div class="audio-dock__tabs">
+      <button type="button" class="chip is-active" data-playlist="37i9dQZF1DWZeKCadgRdKQ">Study Focus</button>
+      <button type="button" class="chip" data-playlist="37i9dQZF1DX8Uebhn9wzrS">Lofi Beats</button>
+      <button type="button" class="chip" data-playlist="37i9dQZF1DX4sWSpwq3LiO">Peaceful Piano</button>
+    </div>
+    <div id="spotifyEmbedWrap" class="spotify-embed-wrap"></div>
+    <p class="audio-dock__hint">
+      <i class="fa-solid fa-circle-info"></i>
+      Untuk lagu penuh, masuk ke Spotify di browser ini. Tanpa login, hanya pratinjau ±30 detik.
+      <a href="https://open.spotify.com/" target="_blank" rel="noopener">Buka Spotify</a>
+    </p>
+  </section>
 </div>
 
 <!-- ================= MODALS ================= -->
