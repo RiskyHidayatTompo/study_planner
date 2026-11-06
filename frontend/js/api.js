@@ -16,6 +16,7 @@
     ? window.supabase.createClient(cleanUrl(cfg.SUPABASE_URL), String(cfg.SUPABASE_ANON_KEY).trim())
     : null;
 
+  const NOTE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
   const AVATAR_BUCKET = 'avatars';
   const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
   const AVATAR_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -204,6 +205,36 @@
     async claimQuest(quest, day) {
       const r = await run(requireClient().rpc('claim_quest', { p_quest: quest, p_day: day, p_tz: new Date().getTimezoneOffset() }));
       return { gained: r.gained, user: await loadUser() };
+    },
+
+    /* ---------------- Catatan kuliah ---------------- */
+    async getNotes() {
+      return run(requireClient().from('notes').select('*').order('updated_at', { ascending: false }));
+    },
+    async saveNote(note, file, existing) {
+      const c = requireClient();
+      if (!note.title || !note.course) throw new Error('Mata kuliah dan judul wajib diisi.');
+      const body = { course: note.course, title: note.title, body: note.body || '', task_id: note.task_id ? Number(note.task_id) : null };
+      if (file) {
+        if (!NOTE_TYPES.includes(file.type)) throw new Error('Lampiran harus gambar (JPG/PNG/WebP) atau PDF.');
+        if (file.size > 10 * 1024 * 1024) throw new Error('Ukuran lampiran maksimal 10 MB.');
+        const { data: { session } } = await c.auth.getSession();
+        const path = `${session.user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        await run(c.storage.from('notes').upload(path, file, { contentType: file.type }));
+        body.file_path = path; body.file_name = file.name;
+        if (existing && existing.file_path) c.storage.from('notes').remove([existing.file_path]).catch(() => {});
+      }
+      if (existing) { body.updated_at = new Date().toISOString(); await run(c.from('notes').update(body).eq('id', existing.id)); }
+      else await run(c.from('notes').insert(body));
+    },
+    async deleteNote(note) {
+      const c = requireClient();
+      await run(c.from('notes').delete().eq('id', note.id));
+      if (note.file_path) c.storage.from('notes').remove([note.file_path]).catch(() => {});
+    },
+    async noteFileUrl(path) {
+      const d = await run(requireClient().storage.from('notes').createSignedUrl(path, 3600));
+      return d.signedUrl;
     },
 
     /* ---------------- Foto profil (Supabase Storage) ---------------- */
