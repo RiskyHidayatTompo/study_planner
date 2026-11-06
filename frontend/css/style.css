@@ -459,3 +459,15 @@ input,select{ font-family:inherit; }
 .heat-legend{ font-size:.78rem; margin-top:.6rem; }
 .history{ list-style:none; margin:.6rem 0 0; padding:0; }
 .history li{ display:flex; justify-content:space-between; padding:.45rem 0; border-bottom:1px solid var(--hairline); font-size:.9rem; }
+
+/* ---- Catatan ---- */
+.note-form{ display:flex; flex-direction:column; gap:.7rem; }
+.note-form input:not([type=file]), .note-form textarea, .note-form select, .note-search{
+  width:100%; padding:.65rem .8rem; background:var(--void); color:var(--white);
+  border:1px solid var(--moon-dim); border-radius:10px; font:inherit; }
+.note-form textarea{ resize:vertical; }
+.note-search{ margin-bottom:1rem; }
+.note-course{ margin:1.2rem 0 .5rem; color:var(--moon-glow); text-transform:uppercase; letter-spacing:.08em; font-size:.8rem; }
+.note{ padding:.8rem 1rem; margin-bottom:.6rem; background:var(--void); border:1px solid var(--hairline); border-radius:12px; }
+.note__head{ display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
+.note__body{ white-space:pre-wrap; margin:.5rem 0; color:var(--silver); font-size:.92rem; }
