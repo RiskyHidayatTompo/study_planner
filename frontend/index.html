@@ -85,6 +85,7 @@
       <button class="nav-item" data-view="jadwal"><i class="fa-solid fa-calendar-week"></i><span>Jadwal Kuliah</span></button>
       <button class="nav-item" data-view="fokus"><i class="fa-solid fa-hourglass-half"></i><span>Fokus &amp; Misi</span></button>
       <button class="nav-item" data-view="tugas"><i class="fa-solid fa-list-check"></i><span>Tugas</span></button>
+      <button class="nav-item" data-view="catatan"><i class="fa-solid fa-note-sticky"></i><span>Catatan</span></button>
       <button class="nav-item" data-view="statistik"><i class="fa-solid fa-chart-line"></i><span>Statistik</span></button>
       <button class="nav-item" data-view="profile"><i class="fa-solid fa-user-shield"></i><span>Profile</span></button>
     </nav>
@@ -224,6 +225,27 @@
           <p class="muted">Total 7 hari terakhir: <strong id="weekMinutes">0</strong> menit</p>
           <ul class="history" id="focusHistory"></ul>
         </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-catatan">
+      <div class="panel">
+        <h3 class="panel__title"><i class="fa-solid fa-note-sticky"></i> <span id="noteFormTitle">Catatan Baru</span></h3>
+        <form id="noteForm" class="note-form">
+          <input id="noteCourse" placeholder="Mata kuliah (mis. Basis Data)" required maxlength="80">
+          <input id="noteTitle" placeholder="Judul catatan" required maxlength="140">
+          <textarea id="noteBody" rows="5" placeholder="Ringkasan materi…"></textarea>
+          <select id="noteTask"></select>
+          <label class="muted">Lampiran (gambar / PDF, maks. 10 MB) <input type="file" id="noteFile" accept="image/jpeg,image/png,image/webp,application/pdf"></label>
+          <div class="focus-actions">
+            <button type="submit" class="btn btn--primary" id="noteSave">Simpan Catatan</button>
+            <button type="button" class="btn btn--ghost is-hidden" id="noteCancel">Batal</button>
+          </div>
+        </form>
+      </div>
+      <div class="panel">
+        <input id="noteSearch" class="note-search" placeholder="🔍 Cari catatan (judul, mata kuliah, isi)…">
+        <div id="noteList"></div>
       </div>
     </section>
 
