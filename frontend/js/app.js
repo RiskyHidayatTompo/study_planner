@@ -13,6 +13,7 @@ const state = {
   taskFilter: 'semua',
   charts: {},
   activity: { sessions: [], progress: [], claims: [] },
+  notes: [],
 };
 
 /* ============================ Helpers ============================ */
@@ -117,6 +118,7 @@ async function loadAllData() {
   state.recommendation = taskRes.recommendation;
   state.schedules = schedRes.schedules;
   state.activity = await Api.getActivity();
+  state.notes = await Api.getNotes();
 }
 
 function renderAll() {
@@ -127,6 +129,7 @@ function renderAll() {
   renderProfile();
   renderCharts();
   renderFocusPage();
+  renderNotes();
 }
 
 /* ============================ Top XP ring ============================ */
@@ -612,12 +615,80 @@ $all('[data-fmode]').forEach(c => c.addEventListener('click', () => setMode(c.da
 $('#focusZen').addEventListener('click', () => $('#focusCard').classList.toggle('is-zen'));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#focusCard').classList.remove('is-zen'); });
 
+/* ============================ Catatan ============================ */
+let editingNote = null;
+
+function renderNotes() {
+  const sel = $('#noteTask'), cur = sel.value;
+  sel.innerHTML = '<option value="">— Hubungkan ke tugas (opsional) —</option>' +
+    state.tasks.map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('');
+  sel.value = cur;
+
+  const q = $('#noteSearch').value.trim().toLowerCase();
+  const taskName = id => (state.tasks.find(t => t.id === id) || {}).title;
+  const groups = {};
+  state.notes.filter(n => !q || [n.title, n.course, n.body].join(' ').toLowerCase().includes(q))
+    .forEach(n => (groups[n.course] = groups[n.course] || []).push(n));
+  $('#noteList').innerHTML = Object.keys(groups).sort().map(c =>
+    `<h4 class="note-course">${escapeHtml(c)}</h4>` + groups[c].map(n => `
+      <article class="note">
+        <div class="note__head"><strong>${escapeHtml(n.title)}</strong>
+          <span><button type="button" class="icon-btn" data-note-edit="${n.id}" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>
+          <button type="button" class="icon-btn" data-note-del="${n.id}" aria-label="Hapus"><i class="fa-solid fa-trash"></i></button></span></div>
+        <p class="note__body">${escapeHtml(n.body)}</p>
+        ${n.task_id && taskName(n.task_id) ? `<small class="muted">🔗 Tugas: ${escapeHtml(taskName(n.task_id))}</small>` : ''}
+        ${n.file_path ? `<div><button type="button" class="btn btn--ghost" data-note-file="${n.id}">📎 ${escapeHtml(n.file_name || 'Lampiran')}</button></div>` : ''}
+      </article>`).join('')).join('') || '<p class="muted">Belum ada catatan.</p>';
+}
+
+function resetNoteForm() {
+  editingNote = null;
+  $('#noteForm').reset();
+  $('#noteFormTitle').textContent = 'Catatan Baru';
+  $('#noteCancel').classList.add('is-hidden');
+}
+
+$('#noteSearch').addEventListener('input', renderNotes);
+$('#noteCancel').addEventListener('click', resetNoteForm);
+$('#noteForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#noteSave'); btn.disabled = true;
+  try {
+    await Api.saveNote({ course: $('#noteCourse').value.trim(), title: $('#noteTitle').value.trim(), body: $('#noteBody').value, task_id: $('#noteTask').value },
+      $('#noteFile').files[0], editingNote);
+    resetNoteForm(); await loadAllData(); renderNotes(); toast('Catatan disimpan 📝');
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; }
+});
+
+$('#noteList').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  const find = id => state.notes.find(n => n.id === Number(id));
+  try {
+    if (btn.dataset.noteEdit) {
+      editingNote = find(btn.dataset.noteEdit);
+      $('#noteCourse').value = editingNote.course; $('#noteTitle').value = editingNote.title;
+      $('#noteBody').value = editingNote.body; $('#noteTask').value = editingNote.task_id || '';
+      $('#noteFormTitle').textContent = 'Edit Catatan'; $('#noteCancel').classList.remove('is-hidden');
+      $('#noteForm').scrollIntoView({ behavior: 'smooth' });
+    } else if (btn.dataset.noteDel) {
+      if (!confirm('Hapus catatan ini?')) return;
+      await Api.deleteNote(find(btn.dataset.noteDel)); await loadAllData(); renderNotes(); toast('Catatan dihapus');
+    } else if (btn.dataset.noteFile) {
+      const w = window.open('', '_blank');           // dibuka dulu agar tidak diblokir popup blocker
+      try { const url = await Api.noteFileUrl(find(btn.dataset.noteFile).file_path); w.opener = null; w.location = url; }
+      catch (err) { w.close(); throw err; }
+    }
+  } catch (err) { toast(err.message, 'error'); }
+});
+
 /* ============================ Navigation ============================ */
 const VIEW_TITLES = {
   dashboard: ['Dashboard','Ringkasan aktivitas malam ini'],
   jadwal: ['Jadwal Kuliah','Atur kelasmu minggu ini'],
   tugas: ['Tugas','Kalahkan deadline satu per satu'],
   fokus: ['Fokus & Misi','Belajar, selesaikan misi, jaga streak'],
+  catatan: ['Catatan','Ringkasan materi per mata kuliah'],
   statistik: ['Statistik','Pantau progres perjuanganmu'],
   profile: ['Profile','Level, rank, dan pencapaianmu'],
 };
