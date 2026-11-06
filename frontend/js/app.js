@@ -12,6 +12,7 @@ const state = {
   recommendation: null,
   taskFilter: 'semua',
   charts: {},
+  activity: { sessions: [], progress: [], claims: [] },
 };
 
 /* ============================ Helpers ============================ */
@@ -115,6 +116,7 @@ async function loadAllData() {
   state.tasks = taskRes.tasks;
   state.recommendation = taskRes.recommendation;
   state.schedules = schedRes.schedules;
+  state.activity = await Api.getActivity();
 }
 
 function renderAll() {
@@ -124,6 +126,7 @@ function renderAll() {
   renderTasks();
   renderProfile();
   renderCharts();
+  renderFocusPage();
 }
 
 /* ============================ Top XP ring ============================ */
@@ -493,11 +496,128 @@ async function fetchAndRenderXpChart(chartColors) {
 
 function destroyChart(key) { if (state.charts[key]) { state.charts[key].destroy(); delete state.charts[key]; } }
 
+/* ============================ Focus, Misi, Streak ============================ */
+const dayKey = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
+const QUESTS = [
+  { id: 'tasks2',  title: 'Selesaikan 2 tugas hari ini', xp: 30, max: 2 },
+  { id: 'focus30', title: 'Belajar selama 30 menit',     xp: 30, max: 30 },
+  { id: 'ontime',  title: 'Selesaikan 1 tugas sebelum deadline', xp: 40, max: 1 },
+];
+
+function dailyStats() {
+  const today = dayKey(new Date()), { sessions, progress } = state.activity;
+  const done = progress.filter(r => r.event === 'task_completed' && dayKey(r.created_at) === today);
+  return {
+    tasks2: done.length,
+    focus30: sessions.filter(s => dayKey(s.created_at) === today).reduce((n, s) => n + s.minutes, 0),
+    ontime: done.filter(r => { const t = state.tasks.find(x => x.id === r.task_id); return t && t.deadline && new Date(t.deadline) >= new Date(r.created_at); }).length,
+  };
+}
+
+// hari aktif = ada sesi fokus atau tugas selesai
+function activityByDay() {
+  const m = {};
+  state.activity.sessions.forEach(s => { const k = dayKey(s.created_at); m[k] = (m[k] || 0) + s.minutes; });
+  state.activity.progress.filter(r => r.event === 'task_completed').forEach(r => { const k = dayKey(r.created_at); m[k] = (m[k] || 0) + 15; });
+  return m;
+}
+
+function calcStreak(byDay) {
+  const day = n => dayKey(new Date(Date.now() - n * 864e5));
+  let now = 0, i = byDay[day(0)] ? 0 : 1;           // hari ini belum belajar -> streak masih hidup sampai besok
+  while (byDay[day(i)]) { now++; i++; }
+  let best = 0, run = 0;
+  for (let n = 119; n >= 0; n--) { run = byDay[day(n)] ? run + 1 : 0; best = Math.max(best, run); }
+  return { now, best: Math.max(best, now) };
+}
+
+function renderFocusPage() {
+  const stats = dailyStats(), today = dayKey(new Date());
+  const claimed = new Set(state.activity.claims.filter(c => c.day === today).map(c => c.quest_id));
+  $('#questList').innerHTML = QUESTS.map(q => {
+    const val = Math.min(stats[q.id], q.max), ready = stats[q.id] >= q.max, got = claimed.has(q.id);
+    return `<div class="quest ${got ? 'is-done' : ''}"><div class="quest__info"><strong>${q.title}</strong>
+      <div class="quest__bar"><span style="width:${val / q.max * 100}%"></span></div>
+      <small class="muted">${val}/${q.max} · +${q.xp} XP</small></div>
+      <button type="button" class="btn btn--primary" data-quest="${q.id}" ${ready && !got ? '' : 'disabled'}>${got ? 'Diklaim ✓' : 'Klaim'}</button></div>`;
+  }).join('');
+  $all('[data-quest]').forEach(b => b.addEventListener('click', async () => {
+    b.disabled = true;
+    try { const r = await Api.claimQuest(b.dataset.quest, today); state.user = r.user; renderTopXp(); renderProfile(); await loadAllData(); renderFocusPage(); toast(`Misi selesai! +${r.gained} XP 🎯`); }
+    catch (e) { toast(e.message, 'error'); renderFocusPage(); }
+  }));
+
+  const byDay = activityByDay(), { now, best } = calcStreak(byDay);
+  $('#streakNow').textContent = now; $('#streakBest').textContent = best;
+  $('#streakReminder').classList.toggle('is-hidden', !!byDay[today]);
+  let cells = '';
+  for (let n = 27; n >= 0; n--) {
+    const k = dayKey(new Date(Date.now() - n * 864e5)), v = byDay[k] || 0, lvl = v === 0 ? 0 : v < 30 ? 1 : v < 60 ? 2 : 3;
+    cells += `<span class="heat__cell lv${lvl}" title="${k}: ${v} poin aktivitas"></span>`;
+  }
+  $('#heatGrid').innerHTML = cells;
+
+  const weekAgo = Date.now() - 7 * 864e5;
+  $('#weekMinutes').textContent = state.activity.sessions.filter(s => new Date(s.created_at) >= weekAgo).reduce((n, s) => n + s.minutes, 0);
+  $('#focusHistory').innerHTML = state.activity.sessions.slice().sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 8)
+    .map(s => `<li><span>${new Date(s.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span><strong>${s.minutes} menit</strong></li>`).join('')
+    || '<li class="muted">Belum ada sesi. Mulai fokus pertamamu!</li>';
+}
+
+/* ---- Timer Pomodoro (berbasis waktu akhir, tetap akurat walau tab di background) ---- */
+const timer = { mode: 'focus', endAt: null, remaining: 25 * 60, tick: null };
+const minsOf = id => Math.max(1, Math.min(+$(id).value || 25, id === '#breakMin' ? 60 : 180));
+const fmtClock = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+function timerReset() {
+  clearInterval(timer.tick); timer.tick = null; timer.endAt = null;
+  timer.remaining = (timer.mode === 'focus' ? minsOf('#focusMin') : minsOf('#breakMin')) * 60;
+  $('#focusTime').textContent = fmtClock(timer.remaining);
+  $('#focusStart').textContent = 'Mulai';
+  $('#focusLabel').textContent = timer.mode === 'focus' ? 'Siap belajar' : 'Waktunya istirahat';
+  document.title = 'Smart Study Planner — MoonKnight';
+}
+
+async function timerDone() {
+  const wasFocus = timer.mode === 'focus', mins = minsOf('#focusMin');
+  timerReset();
+  if (wasFocus) {
+    try { const r = await Api.finishFocus(mins); state.user = r.user; renderTopXp(); renderProfile(); await loadAllData(); renderFocusPage(); toast(`Sesi selesai! +${r.gained} XP 📚`); }
+    catch (e) { toast(e.message, 'error'); }
+    setMode('break');
+  } else { toast('Istirahat selesai. Siap fokus lagi? 🌙'); setMode('focus'); }
+}
+
+function setMode(m) {
+  timer.mode = m;
+  $all('[data-fmode]').forEach(c => c.classList.toggle('is-active', c.dataset.fmode === m));
+  timerReset();
+}
+
+function timerToggle() {
+  if (timer.tick) { timer.remaining = Math.max(0, Math.round((timer.endAt - Date.now()) / 1000)); clearInterval(timer.tick); timer.tick = null; $('#focusStart').textContent = 'Lanjut'; $('#focusLabel').textContent = 'Dijeda'; return; }
+  timer.endAt = Date.now() + timer.remaining * 1000;
+  $('#focusStart').textContent = 'Jeda'; $('#focusLabel').textContent = timer.mode === 'focus' ? 'Sedang fokus…' : 'Istirahat…';
+  timer.tick = setInterval(() => {
+    const left = Math.max(0, Math.round((timer.endAt - Date.now()) / 1000));
+    $('#focusTime').textContent = fmtClock(left); document.title = `${fmtClock(left)} · Fokus`;
+    if (left <= 0) timerDone();
+  }, 250);
+}
+
+$('#focusStart').addEventListener('click', timerToggle);
+$('#focusReset').addEventListener('click', timerReset);
+$all('[data-fmode]').forEach(c => c.addEventListener('click', () => setMode(c.dataset.fmode)));
+['#focusMin', '#breakMin'].forEach(id => $(id).addEventListener('change', () => { if (!timer.tick) timerReset(); }));
+$('#focusZen').addEventListener('click', () => $('#focusCard').classList.toggle('is-zen'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#focusCard').classList.remove('is-zen'); });
+
 /* ============================ Navigation ============================ */
 const VIEW_TITLES = {
   dashboard: ['Dashboard','Ringkasan aktivitas malam ini'],
   jadwal: ['Jadwal Kuliah','Atur kelasmu minggu ini'],
   tugas: ['Tugas','Kalahkan deadline satu per satu'],
+  fokus: ['Fokus & Misi','Belajar, selesaikan misi, jaga streak'],
   statistik: ['Statistik','Pantau progres perjuanganmu'],
   profile: ['Profile','Level, rank, dan pencapaianmu'],
 };
