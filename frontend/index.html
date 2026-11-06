@@ -83,6 +83,7 @@
     <nav class="nav">
       <button class="nav-item is-active" data-view="dashboard"><i class="fa-solid fa-chart-simple"></i><span>Dashboard</span></button>
       <button class="nav-item" data-view="jadwal"><i class="fa-solid fa-calendar-week"></i><span>Jadwal Kuliah</span></button>
+      <button class="nav-item" data-view="fokus"><i class="fa-solid fa-hourglass-half"></i><span>Fokus &amp; Misi</span></button>
       <button class="nav-item" data-view="tugas"><i class="fa-solid fa-list-check"></i><span>Tugas</span></button>
       <button class="nav-item" data-view="statistik"><i class="fa-solid fa-chart-line"></i><span>Statistik</span></button>
       <button class="nav-item" data-view="profile"><i class="fa-solid fa-user-shield"></i><span>Profile</span></button>
@@ -184,6 +185,48 @@
     </section>
 
     <!-- ---------- STATISTIK ---------- -->
+    <section class="view" id="view-fokus">
+      <div class="panel streak-banner is-hidden" id="streakReminder"><i class="fa-solid fa-bell"></i> Kamu belum belajar hari ini. Mulai sesi fokus 25 menit untuk menjaga streak-mu! 🔥</div>
+      <div class="grid-2">
+        <div class="panel focus-card" id="focusCard">
+          <h3 class="panel__title"><i class="fa-solid fa-hourglass-half"></i> Focus Mode</h3>
+          <div class="focus-tabs">
+            <button type="button" class="chip is-active" data-fmode="focus">Fokus</button>
+            <button type="button" class="chip" data-fmode="break">Istirahat</button>
+          </div>
+          <div class="focus-time" id="focusTime">25:00</div>
+          <p class="muted focus-label" id="focusLabel">Siap belajar</p>
+          <div class="focus-actions">
+            <button type="button" class="btn btn--primary" id="focusStart">Mulai</button>
+            <button type="button" class="btn btn--ghost" id="focusReset">Reset</button>
+            <button type="button" class="btn btn--ghost" id="focusZen" title="Layar fokus"><i class="fa-solid fa-expand"></i></button>
+          </div>
+          <div class="focus-custom">
+            <label>Fokus (menit) <input type="number" id="focusMin" min="1" max="180" value="25"></label>
+            <label>Istirahat (menit) <input type="number" id="breakMin" min="1" max="60" value="5"></label>
+          </div>
+          <p class="muted">Selesai satu sesi fokus = <strong>+1 XP per menit</strong> (maks. 120).</p>
+        </div>
+        <div class="panel">
+          <h3 class="panel__title"><i class="fa-solid fa-scroll"></i> Misi Harian</h3>
+          <div id="questList"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3 class="panel__title"><i class="fa-solid fa-fire"></i> Study Streak</h3>
+          <p class="streak-num"><span id="streakNow">0</span> hari <small class="muted">· rekor <span id="streakBest">0</span> hari</small></p>
+          <div class="heat" id="heatGrid"></div>
+          <p class="muted heat-legend">28 hari terakhir · makin terang = makin aktif</p>
+        </div>
+        <div class="panel">
+          <h3 class="panel__title"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Belajar</h3>
+          <p class="muted">Total 7 hari terakhir: <strong id="weekMinutes">0</strong> menit</p>
+          <ul class="history" id="focusHistory"></ul>
+        </div>
+      </div>
+    </section>
+
     <section class="view" id="view-statistik">
       <div class="grid-2">
         <div class="panel">
