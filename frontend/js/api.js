@@ -6,8 +6,14 @@
     !!cfg.SUPABASE_URL && !!cfg.SUPABASE_ANON_KEY &&
     !cfg.SUPABASE_URL.includes('YOUR-PROJECT') && !cfg.SUPABASE_ANON_KEY.includes('YOUR-ANON');
 
+  // Hanya ambil "https://xxxx.supabase.co" — buang path tambahan (mis. /rest/v1/) dan spasi
+  // yang sering ikut tersalin dari dashboard dan menyebabkan "Invalid path specified in request URL".
+  function cleanUrl(u) {
+    try { return new URL(String(u).trim()).origin; } catch { return String(u).trim(); }
+  }
+
   const sb = isConfigured && window.supabase
-    ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY)
+    ? window.supabase.createClient(cleanUrl(cfg.SUPABASE_URL), String(cfg.SUPABASE_ANON_KEY).trim())
     : null;
 
   const AVATAR_BUCKET = 'avatars';
@@ -178,6 +184,26 @@
         byDay[d] = (byDay[d] || 0) + r.xp_earned;
       });
       return { xpLast7Days: Object.entries(byDay).map(([d, xp]) => ({ d, xp })) };
+    },
+
+    /* ---------------- Focus, Misi, Streak ---------------- */
+    async finishFocus(minutes) {
+      const r = await run(requireClient().rpc('finish_focus', { p_minutes: Math.round(minutes) }));
+      return { gained: r.gained, user: await loadUser() };
+    },
+    async getActivity() {
+      const c = requireClient();
+      const since = new Date(Date.now() - 120 * 864e5).toISOString();
+      const [sessions, progress, claims] = await Promise.all([
+        run(c.from('study_sessions').select('minutes, created_at').gte('created_at', since)),
+        run(c.from('progress').select('task_id, event, created_at').gte('created_at', since)),
+        run(c.from('quest_claims').select('quest_id, day').gte('day', new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10))),
+      ]);
+      return { sessions, progress, claims };
+    },
+    async claimQuest(quest, day) {
+      const r = await run(requireClient().rpc('claim_quest', { p_quest: quest, p_day: day, p_tz: new Date().getTimezoneOffset() }));
+      return { gained: r.gained, user: await loadUser() };
     },
 
     /* ---------------- Foto profil (Supabase Storage) ---------------- */
